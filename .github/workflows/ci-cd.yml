@@ -1,0 +1,64 @@
+name: CI/CD Pipeline #name of the workflow
+
+on:   #Everytime an event/events happen it trigger a certain workflow 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:  #when ever above event happen the below jobs get executed
+  build-and-deploy:
+    runs-on: ubuntu:latest # Uses the self-hosted runner on your EC2 instance
+
+    steps:
+      # Checkout the code from the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      # - name: configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
+
+      # Set up Node.js environment for building the frontend
+      - name: Set up Node.js for Frontend
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      # Install and build the frontend
+      - name: Install and Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      # Set up Node.js environment for building the backend
+      - name: Set up Node.js for Backend
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      # Install and build the backend
+      - name: Install and Build Backend
+        run: |
+          cd ../backend
+          npm install
+          npm run build
+
+      # Deploy by copying built files to the appropriate directory
+      - name: Deploy Application
+        run: |
+          mkdir -p /home/ubuntu/app/frontend
+          mkdir -p /home/ubuntu/app/backend
+          cp -r frontend/dist/* /home/ubuntu/app/frontend
+          cp -r backend/build/* /home/ubuntu/app/backend
+
+      # Restart the application (example using PM2)
+      - name: Restart Application
+        run: |
+          cd /home/ubuntu/app/backend
+          pm2 restart server.js
