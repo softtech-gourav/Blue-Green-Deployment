@@ -1,11 +1,10 @@
+// vars/gitClone.groovy
 def call() {
     def gitCredentialsId = env.GIT_CREDENTIALS_ID
 
-    if (!gitCredentialsId) {
-        error "GIT_CREDENTIALS_ID is not set in the environment."
+    withCredentials([string(credentialsId: gitCredentialsId, variable: 'MY_GIT_TOKEN')]) {
+        def gitRepoUrl = "https://digvijaynath:${env.MY_GIT_TOKEN}@bitbucket.org/thppython/gnstudio.git"
+
+        git url: gitRepoUrl, branch: 'master' 
     }
-
-    def gitRepoUrl = 'https://bitbucket.org/thppython/gnstudio.git'
-
-    git url: gitRepoUrl, branch: 'master', credentialsId: gitCredentialsId
 }
